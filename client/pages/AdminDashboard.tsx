@@ -137,6 +137,7 @@ const AdminDashboard = () => {
     maxApplications: "",
     status: "active",
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchSchemes();
@@ -216,7 +217,47 @@ const AdminDashboard = () => {
     setShowForm(true);
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (!String(form.title || '').trim()) errors.title = 'Title is required';
+    if (!String(form.description || '').trim()) errors.description = 'Description is required';
+    const amt = Number(form.amount);
+    if (!form.amount || Number.isNaN(amt) || amt <= 0) errors.amount = 'Enter a valid amount (> 0)';
+    const elig = Array.isArray(form.eligibilityCriteria)
+      ? form.eligibilityCriteria
+      : String(form.eligibilityCriteria || '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean);
+    if (!elig.length) errors.eligibilityCriteria = 'Add at least one eligibility criteria';
+    const reqDocs = Array.isArray(form.requiredDocuments)
+      ? form.requiredDocuments
+      : String(form.requiredDocuments || '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean);
+    if (!reqDocs.length) errors.requiredDocuments = 'Add at least one required document';
+    if (!form.applicationDeadline) errors.applicationDeadline = 'Application deadline is required';
+    else {
+      const d = new Date(form.applicationDeadline);
+      if (!(d instanceof Date) || isNaN(d.getTime()) || d <= new Date()) {
+        errors.applicationDeadline = 'Deadline must be a valid future date/time';
+      }
+    }
+    if (form.maxApplications) {
+      const ma = Number(form.maxApplications);
+      if (Number.isNaN(ma) || ma < 0) errors.maxApplications = 'Max applications must be a positive number';
+    }
+    setFormErrors(errors);
+    if (Object.keys(errors).length) {
+      toast({ title: 'Please fix the errors', description: 'Check highlighted fields', variant: 'destructive' as any });
+      return false;
+    }
+    return true;
+  };
+
   const submitForm = async () => {
+    if (!validateForm()) return;
     const api = (await import("../services/api")).default;
     const payload = {
       ...form,
@@ -1129,6 +1170,9 @@ const AdminDashboard = () => {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
+                {formErrors.title && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.title}</div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">Description</label>
@@ -1140,6 +1184,9 @@ const AdminDashboard = () => {
                     setForm({ ...form, description: e.target.value })
                   }
                 />
+                {formErrors.description && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.description}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">Amount (INR)</label>
@@ -1148,6 +1195,9 @@ const AdminDashboard = () => {
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 />
+                {formErrors.amount && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.amount}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1160,6 +1210,9 @@ const AdminDashboard = () => {
                     setForm({ ...form, maxApplications: e.target.value })
                   }
                 />
+                {formErrors.maxApplications && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.maxApplications}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1173,6 +1226,9 @@ const AdminDashboard = () => {
                     setForm({ ...form, applicationDeadline: e.target.value })
                   }
                 />
+                {formErrors.applicationDeadline && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.applicationDeadline}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1214,6 +1270,9 @@ const AdminDashboard = () => {
                     setForm({ ...form, eligibilityCriteria: e.target.value })
                   }
                 />
+                {formErrors.eligibilityCriteria && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.eligibilityCriteria}</div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">
@@ -1230,6 +1289,9 @@ const AdminDashboard = () => {
                     setForm({ ...form, requiredDocuments: e.target.value })
                   }
                 />
+                {formErrors.requiredDocuments && (
+                  <div className="text-xs text-red-600 mt-1">{formErrors.requiredDocuments}</div>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2">
