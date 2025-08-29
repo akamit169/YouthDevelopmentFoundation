@@ -156,6 +156,11 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
   const [notes, setNotes] = useState<string>(row.reviewNotes || "");
   const [saving, setSaving] = useState(false);
 
+  const locked = useMemo(() => {
+    const hasComment = String(row.reviewNotes || notes || "").trim().length > 0;
+    return row.status === "approved" && hasComment;
+  }, [row.status, row.reviewNotes, notes]);
+
   const save = async () => {
     setSaving(true);
     try {
@@ -193,9 +198,11 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
       </td>
       <td className="px-6 py-3 text-sm text-gray-900">
         <select
-          className="border rounded px-2 py-1"
+          className="border rounded px-2 py-1 disabled:opacity-50"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
+          disabled={locked}
+          title={locked ? "Approved with comment; further edits disabled" : ""}
         >
           {statuses.map((s) => (
             <option key={s.value} value={s.value}>
@@ -207,25 +214,30 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
       <td className="px-6 py-3 text-sm text-gray-900">
         <input
           type="number"
-          className="w-24 border rounded px-2 py-1"
+          className="w-24 border rounded px-2 py-1 disabled:opacity-50"
           value={score}
           onChange={(e) => setScore(e.target.value)}
+          disabled={locked}
+          title={locked ? "Approved with comment; further edits disabled" : ""}
         />
       </td>
       <td className="px-6 py-3 text-sm text-gray-900">
         <input
           type="text"
-          className="w-full border rounded px-2 py-1"
+          className="w-full border rounded px-2 py-1 disabled:opacity-50"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Enter review notes"
+          disabled={locked}
+          title={locked ? "Approved with comment; further edits disabled" : ""}
         />
       </td>
       <td className="px-6 py-3 text-right text-sm">
         <button
           className="px-3 py-2 bg-ydf-deep-blue text-white rounded disabled:opacity-50"
           onClick={save}
-          disabled={saving}
+          disabled={saving || locked}
+          title={locked ? "Approved with comment; further edits disabled" : ""}
         >
           {saving ? "Saving..." : "Save"}
         </button>
