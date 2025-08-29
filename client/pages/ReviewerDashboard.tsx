@@ -173,7 +173,10 @@ const ReviewerDashboard = () => {
     setDetailsOpen(true);
   };
 
-  const handleDecision = async (app: any, decision: "approved" | "rejected") => {
+  const handleDecision = async (
+    app: any,
+    decision: "approved" | "rejected",
+  ) => {
     setSavingAction(true);
     try {
       const payload: any = { status: decision, reviewNotes: actionNotes };
@@ -193,7 +196,13 @@ const ReviewerDashboard = () => {
                   ...p,
                   status: decision === "approved" ? "Approved" : "Rejected",
                   score: actionScore === "" ? p.score : Number(actionScore),
-                  raw: { ...p.raw, status: decision, reviewNotes: actionNotes, score: actionScore === "" ? p.raw?.score : Number(actionScore) },
+                  raw: {
+                    ...p.raw,
+                    status: decision,
+                    reviewNotes: actionNotes,
+                    score:
+                      actionScore === "" ? p.raw?.score : Number(actionScore),
+                  },
                 }
               : p,
           ),
@@ -503,7 +512,9 @@ const ReviewerDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-gray-600">Applicant</div>
-                  <div className="font-medium">{selectedApp.applicant.name}</div>
+                  <div className="font-medium">
+                    {selectedApp.applicant.name}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Scholarship</div>
@@ -519,7 +530,9 @@ const ReviewerDashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Submitted</div>
-                  <div className="font-medium">{String(selectedApp.submittedDate)}</div>
+                  <div className="font-medium">
+                    {String(selectedApp.submittedDate)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Amount</div>
@@ -530,19 +543,27 @@ const ReviewerDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-gray-600">Email</div>
-                  <div className="font-medium">{selectedApp.applicant.email || "-"}</div>
+                  <div className="font-medium">
+                    {selectedApp.applicant.email || "-"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Phone</div>
-                  <div className="font-medium">{selectedApp.applicant.phone || "-"}</div>
+                  <div className="font-medium">
+                    {selectedApp.applicant.phone || "-"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Course</div>
-                  <div className="font-medium">{selectedApp.applicant.course || "-"}</div>
+                  <div className="font-medium">
+                    {selectedApp.applicant.course || "-"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Year</div>
-                  <div className="font-medium">{selectedApp.applicant.year || "-"}</div>
+                  <div className="font-medium">
+                    {selectedApp.applicant.year || "-"}
+                  </div>
                 </div>
               </div>
 
@@ -551,20 +572,27 @@ const ReviewerDashboard = () => {
                 <div className="flex flex-wrap gap-2">
                   {selectedApp.documents?.length ? (
                     selectedApp.documents.map((d: any, i: number) => (
-                      <span key={i} className="inline-flex items-center space-x-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                      <span
+                        key={i}
+                        className="inline-flex items-center space-x-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full"
+                      >
                         <Paperclip className="h-3 w-3" />
                         <span>{String(d)}</span>
                       </span>
                     ))
                   ) : (
-                    <div className="text-sm text-gray-500">No documents uploaded</div>
+                    <div className="text-sm text-gray-500">
+                      No documents uploaded
+                    </div>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Review Notes</label>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Review Notes
+                  </label>
                   <textarea
                     className="w-full border rounded px-3 py-2"
                     rows={4}
@@ -574,7 +602,9 @@ const ReviewerDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Score</label>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Score
+                  </label>
                   <input
                     type="number"
                     className="w-40 border rounded px-3 py-2"
@@ -598,16 +628,24 @@ const ReviewerDashboard = () => {
               </button>
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
-                onClick={() => selectedApp && handleDecision(selectedApp, "rejected")}
+                onClick={() =>
+                  selectedApp && handleDecision(selectedApp, "rejected")
+                }
                 disabled={savingAction}
               >
                 Reject
               </button>
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
-                onClick={() => selectedApp && handleDecision(selectedApp, "approved")}
+                onClick={() =>
+                  selectedApp && handleDecision(selectedApp, "approved")
+                }
                 disabled={savingAction || !actionNotes.trim()}
-                title={!actionNotes.trim() ? "Please add review notes to approve" : ""}
+                title={
+                  !actionNotes.trim()
+                    ? "Please add review notes to approve"
+                    : ""
+                }
               >
                 {savingAction ? "Saving..." : "Approve"}
               </button>
