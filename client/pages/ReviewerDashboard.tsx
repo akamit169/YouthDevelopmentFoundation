@@ -46,13 +46,19 @@ const ReviewerDashboard = () => {
               name: a.studentName || `Student #${a.studentId}`,
               age: a?.formData?.age || "",
               location: a?.formData?.location || "",
-              email: a?.formData?.email || "",
-              phone: a?.formData?.phone || "",
-              course: a?.formData?.course || "",
-              year: a?.formData?.year || "",
+              email: a.studentEmail || a?.formData?.email || "",
+              phone: a.studentPhone || a?.formData?.phone || "",
+              course:
+                a?.studentProfileData?.course || a?.formData?.course || "",
+              year: a?.studentProfileData?.year || a?.formData?.year || "",
             },
             scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
-            amount: a.amountAwarded ? `₹${a.amountAwarded}` : "",
+            amount:
+              a.amountAwarded != null && a.amountAwarded !== ""
+                ? `${a.scholarshipCurrency === "INR" ? "₹" : ""}${a.amountAwarded}`
+                : a.scholarshipAmount != null && a.scholarshipAmount !== ""
+                  ? `${a.scholarshipCurrency === "INR" ? "₹" : ""}${a.scholarshipAmount}`
+                  : "",
             submittedDate: a.submittedAt,
             score: a.score ?? "",
             status:
