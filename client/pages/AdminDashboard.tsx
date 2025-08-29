@@ -126,8 +126,8 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [appsMin, setAppsMin] = useState<string>("");
   const [budgetMin, setBudgetMin] = useState<string>("");
-  const [deadlineBefore, setDeadlineBefore] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>({
@@ -167,15 +167,13 @@ const AdminDashboard = () => {
     const p:any = { page, limit: 100 };
     if (statusVal && statusVal !== 'all') p.status = statusVal;
     if (budgetMin) p.minAmount = Number(budgetMin)||0;
-    if (deadlineBefore) p.deadlineBefore = deadlineBefore;
     if (sortBy === 'applications') p.sortBy = 'applications';
     else if (sortBy === 'budget') p.sortBy = 'amount';
-    else if (sortBy === 'deadline') p.sortBy = 'deadline';
     fetchSchemes(p);
   };
 
   const resetFilters = () => {
-    setStatusFilter('all'); setAppsMin(''); setBudgetMin(''); setDeadlineBefore(''); setSortBy('');
+    setStatusFilter('all'); setAppsMin(''); setBudgetMin(''); setSortBy(''); setShowFilters(false);
     fetchSchemes({ status: 'all', limit: 100 });
   };
 
@@ -666,9 +664,9 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Search, Filters, Sorting */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
-        <div className="lg:col-span-3 relative">
+      {/* Search and Filter Toggle */}
+      <div className="flex items-center space-x-4">
+        <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
@@ -678,46 +676,48 @@ const AdminDashboard = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="lg:col-span-2">
-          <label className="text-xs text-gray-500">Status</label>
-          <select
-            className="w-full border rounded px-3 py-2"
-            value={statusFilter}
-            onChange={(e)=>{ setStatusFilter(e.target.value); applyFilters(1, e.target.value); }}
-          >
-            <option value="all">All</option>
-            <option value="active">active</option>
-            <option value="inactive">inactive</option>
-            <option value="closed">closed</option>
-          </select>
-        </div>
-        <div className="lg:col-span-2">
-          <label className="text-xs text-gray-500">Applications ≥</label>
-          <input className="w-full border rounded px-3 py-2" value={appsMin} onChange={(e)=>setAppsMin(e.target.value)} />
-        </div>
-        <div className="lg:col-span-2">
-          <label className="text-xs text-gray-500">Budget min (₹)</label>
-          <input className="w-full border rounded px-3 py-2" value={budgetMin} onChange={(e)=>setBudgetMin(e.target.value)} />
-        </div>
-        <div className="lg:col-span-3">
-          <label className="text-xs text-gray-500">Deadline before</label>
-          <input type="date" className="w-full border rounded px-3 py-2" value={deadlineBefore} onChange={(e)=>setDeadlineBefore(e.target.value)} />
-        </div>
-        <div className="lg:col-span-3">
-          <label className="text-xs text-gray-500">Sort by</label>
-          <select className="w-full border rounded px-3 py-2" value={sortBy} onChange={(e)=>{ setSortBy(e.target.value); applyFilters(); }}>
-            <option value="">None</option>
-            <option value="status">Status</option>
-            <option value="applications">Applications</option>
-            <option value="budget">Budget</option>
-            <option value="deadline">Deadline</option>
-          </select>
-        </div>
-        <div className="lg:col-span-2 flex gap-2">
-          <button onClick={()=>applyFilters()} className="px-3 py-2 border rounded">Apply</button>
-          <button onClick={()=>resetFilters()} className="px-3 py-2 border rounded">Reset</button>
-        </div>
+        <button onClick={() => setShowFilters((v)=>!v)} className="p-2 border border-ydf-light-gray rounded-lg hover:bg-gray-50">
+          <Filter className="h-4 w-4 text-gray-600" />
+        </button>
       </div>
+      {showFilters && (
+        <div className="mt-3 grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+          <div className="lg:col-span-3">
+            <label className="text-xs text-gray-500">Status</label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={statusFilter}
+              onChange={(e)=>{ setStatusFilter(e.target.value); }}
+            >
+              <option value="all">All</option>
+              <option value="active">active</option>
+              <option value="inactive">inactive</option>
+              <option value="closed">closed</option>
+            </select>
+          </div>
+          <div className="lg:col-span-3">
+            <label className="text-xs text-gray-500">Applications ≥</label>
+            <input className="w-full border rounded px-3 py-2" value={appsMin} onChange={(e)=>setAppsMin(e.target.value)} />
+          </div>
+          <div className="lg:col-span-3">
+            <label className="text-xs text-gray-500">Budget min (₹)</label>
+            <input className="w-full border rounded px-3 py-2" value={budgetMin} onChange={(e)=>setBudgetMin(e.target.value)} />
+          </div>
+          <div className="lg:col-span-3">
+            <label className="text-xs text-gray-500">Sort by</label>
+            <select className="w-full border rounded px-3 py-2" value={sortBy} onChange={(e)=> setSortBy(e.target.value)}>
+              <option value="">None</option>
+              <option value="status">Status</option>
+              <option value="applications">Applications</option>
+              <option value="budget">Budget</option>
+            </select>
+          </div>
+          <div className="lg:col-span-12 flex gap-2">
+            <button onClick={()=>applyFilters()} className="px-3 py-2 border rounded">Apply</button>
+            <button onClick={()=>resetFilters()} className="px-3 py-2 border rounded">Reset</button>
+          </div>
+        </div>
+      )}
 
       {/* Schemes Table */}
       <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden">
