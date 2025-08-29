@@ -152,29 +152,40 @@ const AdminDashboard = () => {
   const fetchSchemes = async (params?: any) => {
     try {
       const api = (await import("../services/api")).default;
-      const res = await api.listScholarships(params || { status: "all", limit: 100 });
+      const res = await api.listScholarships(
+        params || { status: "all", limit: 100 },
+      );
       let data = res.success ? res.data : [];
       // client-side filters unsupported by API
-      if (appsMin) data = data.filter((s:any)=> (s.currentApplications ?? 0) >= Number(appsMin||0));
-      if (sortBy === 'status') {
-        data = [...data].sort((a:any,b:any)=> String(a.status).localeCompare(String(b.status)));
+      if (appsMin)
+        data = data.filter(
+          (s: any) => (s.currentApplications ?? 0) >= Number(appsMin || 0),
+        );
+      if (sortBy === "status") {
+        data = [...data].sort((a: any, b: any) =>
+          String(a.status).localeCompare(String(b.status)),
+        );
       }
       setSchemes(data);
     } catch (e) {}
   };
 
-  const applyFilters = (page=1, statusVal= statusFilter) => {
-    const p:any = { page, limit: 100 };
-    if (statusVal && statusVal !== 'all') p.status = statusVal;
-    if (budgetMin) p.minAmount = Number(budgetMin)||0;
-    if (sortBy === 'applications') p.sortBy = 'applications';
-    else if (sortBy === 'budget') p.sortBy = 'amount';
+  const applyFilters = (page = 1, statusVal = statusFilter) => {
+    const p: any = { page, limit: 100 };
+    if (statusVal && statusVal !== "all") p.status = statusVal;
+    if (budgetMin) p.minAmount = Number(budgetMin) || 0;
+    if (sortBy === "applications") p.sortBy = "applications";
+    else if (sortBy === "budget") p.sortBy = "amount";
     fetchSchemes(p);
   };
 
   const resetFilters = () => {
-    setStatusFilter('all'); setAppsMin(''); setBudgetMin(''); setSortBy(''); setShowFilters(false);
-    fetchSchemes({ status: 'all', limit: 100 });
+    setStatusFilter("all");
+    setAppsMin("");
+    setBudgetMin("");
+    setSortBy("");
+    setShowFilters(false);
+    fetchSchemes({ status: "all", limit: 100 });
   };
 
   const fetchOverviewData = async () => {
@@ -244,38 +255,49 @@ const AdminDashboard = () => {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!String(form.title || '').trim()) errors.title = 'Title is required';
-    if (!String(form.description || '').trim()) errors.description = 'Description is required';
+    if (!String(form.title || "").trim()) errors.title = "Title is required";
+    if (!String(form.description || "").trim())
+      errors.description = "Description is required";
     const amt = Number(form.amount);
-    if (!form.amount || Number.isNaN(amt) || amt <= 0) errors.amount = 'Enter a valid amount (> 0)';
+    if (!form.amount || Number.isNaN(amt) || amt <= 0)
+      errors.amount = "Enter a valid amount (> 0)";
     const elig = Array.isArray(form.eligibilityCriteria)
       ? form.eligibilityCriteria
-      : String(form.eligibilityCriteria || '')
-          .split(',')
+      : String(form.eligibilityCriteria || "")
+          .split(",")
           .map((x) => x.trim())
           .filter(Boolean);
-    if (!elig.length) errors.eligibilityCriteria = 'Add at least one eligibility criteria';
+    if (!elig.length)
+      errors.eligibilityCriteria = "Add at least one eligibility criteria";
     const reqDocs = Array.isArray(form.requiredDocuments)
       ? form.requiredDocuments
-      : String(form.requiredDocuments || '')
-          .split(',')
+      : String(form.requiredDocuments || "")
+          .split(",")
           .map((x) => x.trim())
           .filter(Boolean);
-    if (!reqDocs.length) errors.requiredDocuments = 'Add at least one required document';
-    if (!form.applicationDeadline) errors.applicationDeadline = 'Application deadline is required';
+    if (!reqDocs.length)
+      errors.requiredDocuments = "Add at least one required document";
+    if (!form.applicationDeadline)
+      errors.applicationDeadline = "Application deadline is required";
     else {
       const d = new Date(form.applicationDeadline);
       if (!(d instanceof Date) || isNaN(d.getTime()) || d <= new Date()) {
-        errors.applicationDeadline = 'Deadline must be a valid future date/time';
+        errors.applicationDeadline =
+          "Deadline must be a valid future date/time";
       }
     }
     if (form.maxApplications) {
       const ma = Number(form.maxApplications);
-      if (Number.isNaN(ma) || ma < 0) errors.maxApplications = 'Max applications must be a positive number';
+      if (Number.isNaN(ma) || ma < 0)
+        errors.maxApplications = "Max applications must be a positive number";
     }
     setFormErrors(errors);
     if (Object.keys(errors).length) {
-      toast({ title: 'Please fix the errors', description: 'Check highlighted fields', variant: 'destructive' as any });
+      toast({
+        title: "Please fix the errors",
+        description: "Check highlighted fields",
+        variant: "destructive" as any,
+      });
       return false;
     }
     return true;
@@ -676,7 +698,10 @@ const AdminDashboard = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button onClick={() => setShowFilters((v)=>!v)} className="p-2 border border-ydf-light-gray rounded-lg hover:bg-gray-50">
+        <button
+          onClick={() => setShowFilters((v) => !v)}
+          className="p-2 border border-ydf-light-gray rounded-lg hover:bg-gray-50"
+        >
           <Filter className="h-4 w-4 text-gray-600" />
         </button>
       </div>
@@ -687,7 +712,9 @@ const AdminDashboard = () => {
             <select
               className="w-full border rounded px-3 py-2"
               value={statusFilter}
-              onChange={(e)=>{ setStatusFilter(e.target.value); }}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+              }}
             >
               <option value="all">All</option>
               <option value="active">active</option>
@@ -697,15 +724,27 @@ const AdminDashboard = () => {
           </div>
           <div className="lg:col-span-3">
             <label className="text-xs text-gray-500">Applications ≥</label>
-            <input className="w-full border rounded px-3 py-2" value={appsMin} onChange={(e)=>setAppsMin(e.target.value)} />
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={appsMin}
+              onChange={(e) => setAppsMin(e.target.value)}
+            />
           </div>
           <div className="lg:col-span-3">
             <label className="text-xs text-gray-500">Budget min (₹)</label>
-            <input className="w-full border rounded px-3 py-2" value={budgetMin} onChange={(e)=>setBudgetMin(e.target.value)} />
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={budgetMin}
+              onChange={(e) => setBudgetMin(e.target.value)}
+            />
           </div>
           <div className="lg:col-span-3">
             <label className="text-xs text-gray-500">Sort by</label>
-            <select className="w-full border rounded px-3 py-2" value={sortBy} onChange={(e)=> setSortBy(e.target.value)}>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
               <option value="">None</option>
               <option value="status">Status</option>
               <option value="applications">Applications</option>
@@ -713,8 +752,18 @@ const AdminDashboard = () => {
             </select>
           </div>
           <div className="lg:col-span-12 flex gap-2">
-            <button onClick={()=>applyFilters()} className="px-3 py-2 border rounded">Apply</button>
-            <button onClick={()=>resetFilters()} className="px-3 py-2 border rounded">Reset</button>
+            <button
+              onClick={() => applyFilters()}
+              className="px-3 py-2 border rounded"
+            >
+              Apply
+            </button>
+            <button
+              onClick={() => resetFilters()}
+              className="px-3 py-2 border rounded"
+            >
+              Reset
+            </button>
           </div>
         </div>
       )}
@@ -1216,7 +1265,9 @@ const AdminDashboard = () => {
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
                 {formErrors.title && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.title}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.title}
+                  </div>
                 )}
               </div>
               <div className="sm:col-span-2">
@@ -1230,7 +1281,9 @@ const AdminDashboard = () => {
                   }
                 />
                 {formErrors.description && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.description}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.description}
+                  </div>
                 )}
               </div>
               <div>
@@ -1241,7 +1294,9 @@ const AdminDashboard = () => {
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 />
                 {formErrors.amount && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.amount}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.amount}
+                  </div>
                 )}
               </div>
               <div>
@@ -1256,7 +1311,9 @@ const AdminDashboard = () => {
                   }
                 />
                 {formErrors.maxApplications && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.maxApplications}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.maxApplications}
+                  </div>
                 )}
               </div>
               <div>
@@ -1272,7 +1329,9 @@ const AdminDashboard = () => {
                   }
                 />
                 {formErrors.applicationDeadline && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.applicationDeadline}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.applicationDeadline}
+                  </div>
                 )}
               </div>
               <div>
@@ -1316,7 +1375,9 @@ const AdminDashboard = () => {
                   }
                 />
                 {formErrors.eligibilityCriteria && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.eligibilityCriteria}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.eligibilityCriteria}
+                  </div>
                 )}
               </div>
               <div className="sm:col-span-2">
@@ -1335,7 +1396,9 @@ const AdminDashboard = () => {
                   }
                 />
                 {formErrors.requiredDocuments && (
-                  <div className="text-xs text-red-600 mt-1">{formErrors.requiredDocuments}</div>
+                  <div className="text-xs text-red-600 mt-1">
+                    {formErrors.requiredDocuments}
+                  </div>
                 )}
               </div>
             </div>
