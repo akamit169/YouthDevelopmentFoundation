@@ -112,6 +112,15 @@ router.patch(
           .status(403)
           .json({ success: false, error: "Not assigned to you" });
 
+      // Lock once approved with comment
+      const hasComment = String(appRec.reviewNotes || "").trim().length > 0;
+      if (String(appRec.status) === "approved" && hasComment) {
+        return res.status(403).json({
+          success: false,
+          error: "Application is locked after approval with comments",
+        });
+      }
+
       const { status, score, reviewNotes } = req.body || {};
       if (
         status &&
