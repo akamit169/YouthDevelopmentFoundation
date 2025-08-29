@@ -123,6 +123,11 @@ const AdminDashboard = () => {
   ];
 
   const [schemes, setSchemes] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [appsMin, setAppsMin] = useState<string>("");
+  const [budgetMin, setBudgetMin] = useState<string>("");
+  const [deadlineBefore, setDeadlineBefore] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>({
@@ -144,12 +149,34 @@ const AdminDashboard = () => {
     fetchOverviewData();
   }, []);
 
-  const fetchSchemes = async () => {
+  const fetchSchemes = async (params?: any) => {
     try {
       const api = (await import("../services/api")).default;
-      const res = await api.listScholarships({ status: "all", limit: 100 });
-      if (res.success) setSchemes(res.data);
+      const res = await api.listScholarships(params || { status: "all", limit: 100 });
+      let data = res.success ? res.data : [];
+      // client-side filters unsupported by API
+      if (appsMin) data = data.filter((s:any)=> (s.currentApplications ?? 0) >= Number(appsMin||0));
+      if (sortBy === 'status') {
+        data = [...data].sort((a:any,b:any)=> String(a.status).localeCompare(String(b.status)));
+      }
+      setSchemes(data);
     } catch (e) {}
+  };
+
+  const applyFilters = (page=1, statusVal= statusFilter) => {
+    const p:any = { page, limit: 100 };
+    if (statusVal && statusVal !== 'all') p.status = statusVal;
+    if (budgetMin) p.minAmount = Number(budgetMin)||0;
+    if (deadlineBefore) p.deadlineBefore = deadlineBefore;
+    if (sortBy === 'applications') p.sortBy = 'applications';
+    else if (sortBy === 'budget') p.sortBy = 'amount';
+    else if (sortBy === 'deadline') p.sortBy = 'deadline';
+    fetchSchemes(p);
+  };
+
+  const resetFilters = () => {
+    setStatusFilter('all'); setAppsMin(''); setBudgetMin(''); setDeadlineBefore(''); setSortBy('');
+    fetchSchemes({ status: 'all', limit: 100 });
   };
 
   const fetchOverviewData = async () => {
@@ -630,24 +657,6 @@ const AdminDashboard = () => {
         </h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={async () => {
-              const api = (await import("../services/api")).default;
-              const blob = await api.exportScholarshipsCSV();
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "scholarships.csv";
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(url);
-            }}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
-          >
-            <Download className="h-4 w-4" />
-            <span>Export Schemes</span>
-          </button>
-          <button
             onClick={openCreate}
             className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
           >
@@ -657,9 +666,9 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex items-center space-x-4">
-        <div className="flex-1 relative">
+      {/* Search, Filters, Sorting */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+        <div className="lg:col-span-3 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
@@ -669,9 +678,45 @@ const AdminDashboard = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="p-2 border border-ydf-light-gray rounded-lg hover:bg-gray-50">
-          <Filter className="h-4 w-4 text-gray-600" />
-        </button>
+        <div className="lg:col-span-2">
+          <label className="text-xs text-gray-500">Status</label>
+          <select
+            className="w-full border rounded px-3 py-2"
+            value={statusFilter}
+            onChange={(e)=>{ setStatusFilter(e.target.value); applyFilters(1, e.target.value); }}
+          >
+            <option value="all">All</option>
+            <option value="active">active</option>
+            <option value="inactive">inactive</option>
+            <option value="closed">closed</option>
+          </select>
+        </div>
+        <div className="lg:col-span-2">
+          <label className="text-xs text-gray-500">Applications ≥</label>
+          <input className="w-full border rounded px-3 py-2" value={appsMin} onChange={(e)=>setAppsMin(e.target.value)} />
+        </div>
+        <div className="lg:col-span-2">
+          <label className="text-xs text-gray-500">Budget min (₹)</label>
+          <input className="w-full border rounded px-3 py-2" value={budgetMin} onChange={(e)=>setBudgetMin(e.target.value)} />
+        </div>
+        <div className="lg:col-span-3">
+          <label className="text-xs text-gray-500">Deadline before</label>
+          <input type="date" className="w-full border rounded px-3 py-2" value={deadlineBefore} onChange={(e)=>setDeadlineBefore(e.target.value)} />
+        </div>
+        <div className="lg:col-span-3">
+          <label className="text-xs text-gray-500">Sort by</label>
+          <select className="w-full border rounded px-3 py-2" value={sortBy} onChange={(e)=>{ setSortBy(e.target.value); applyFilters(); }}>
+            <option value="">None</option>
+            <option value="status">Status</option>
+            <option value="applications">Applications</option>
+            <option value="budget">Budget</option>
+            <option value="deadline">Deadline</option>
+          </select>
+        </div>
+        <div className="lg:col-span-2 flex gap-2">
+          <button onClick={()=>applyFilters()} className="px-3 py-2 border rounded">Apply</button>
+          <button onClick={()=>resetFilters()} className="px-3 py-2 border rounded">Reset</button>
+        </div>
       </div>
 
       {/* Schemes Table */}
