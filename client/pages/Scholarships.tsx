@@ -39,14 +39,54 @@ const Scholarships = () => {
     (async () => {
       try {
         const api = (await import("../services/api")).default;
-        const res = await api.listScholarships({
-          status: "active",
-          limit: 100,
-        });
-        if (res.success) setRemoteScholarships(res.data);
+        const params: Record<string, any> = { status: "active", limit: 1000 };
+        const q = searchQuery.trim();
+        if (q) params.search = q;
+        if (selectedCategory && selectedCategory !== "all")
+          params.category = selectedCategory;
+        // Amount range -> min/max
+        if (selectedAmount && selectedAmount !== "all") {
+          if (selectedAmount === "0-25000") {
+            params.maxAmount = 25000;
+          } else if (selectedAmount === "25001-50000") {
+            params.minAmount = 25001;
+            params.maxAmount = 50000;
+          } else if (selectedAmount === "50001-75000") {
+            params.minAmount = 50001;
+            params.maxAmount = 75000;
+          } else if (selectedAmount === "75001+") {
+            params.minAmount = 75001;
+          }
+        }
+        // Deadline -> after now and before target window
+        const now = new Date();
+        if (selectedDeadline && selectedDeadline !== "all") {
+          const after = now.toISOString();
+          let before: string | undefined;
+          const d = new Date(now);
+          if (selectedDeadline === "week") d.setDate(d.getDate() + 7);
+          if (selectedDeadline === "month") d.setDate(d.getDate() + 30);
+          if (selectedDeadline === "quarter") d.setDate(d.getDate() + 90);
+          before = d.toISOString();
+          params.deadlineAfter = after;
+          params.deadlineBefore = before;
+        }
+        // Sort
+        if (sortBy === "deadline") {
+          params.sortBy = "deadline";
+          params.sortOrder = "asc";
+        } else if (sortBy === "amount") {
+          params.sortBy = "amount";
+          params.sortOrder = "desc";
+        } else if (sortBy === "applicants") {
+          params.sortBy = "applicants";
+          params.sortOrder = "desc";
+        }
+        const res = await api.listScholarships(params);
+        if (res.success) setRemoteScholarships(res.data || []);
       } catch {}
     })();
-  }, []);
+  }, [searchQuery, selectedCategory, selectedAmount, selectedDeadline, sortBy]);
 
   useEffect(() => {
     (async () => {
@@ -344,17 +384,10 @@ const Scholarships = () => {
     const matchesSearch =
       q === "" ||
       scholarship.name.toLowerCase().includes(q) ||
-      scholarship.organization.toLowerCase().includes(q) ||
-      (scholarship.tags || []).some((t: any) =>
-        String(t).toLowerCase().includes(q),
-      ) ||
-      String(scholarship.category || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(scholarship.amount)
-        .replace(/[^0-9]/g, "")
-        .includes(q.replace(/[^0-9]/g, ""));
+      (String(scholarship.amount) || "").toLowerCase().includes(q) ||
+      (String(scholarship.category) || "").toLowerCase().includes(q);
 
+    // Client-side fallbacks (server already filters when possible)
     const matchesCategory = (() => {
       if (selectedCategory === "all") return true;
       const tags = (scholarship.tags || []) as any[];
@@ -380,7 +413,7 @@ const Scholarships = () => {
 
     const matchesAmount = () => {
       if (selectedAmount === "all") return true;
-      const amount = parseInt(scholarship.amount.replace(/[^0-9]/g, ""));
+      const amount = parseInt(String(scholarship.amount).replace(/[^0-9]/g, ""));
       switch (selectedAmount) {
         case "0-25000":
           return amount <= 25000;
