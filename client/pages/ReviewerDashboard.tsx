@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
@@ -29,13 +29,17 @@ const ReviewerDashboard = () => {
   const [selectedRegion, setSelectedRegion] = useState("all");
 
   const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<any | null>(null);
+  const [actionNotes, setActionNotes] = useState<string>("");
+  const [actionScore, setActionScore] = useState<string>("");
+  const [savingAction, setSavingAction] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await api.listReviewerApplications({ page: 1, limit: 5 });
         if (res.success) {
-          // Normalize to match UI expectations
           const mapped = (res.data || []).map((a: any) => ({
             id: a.id,
             applicant: {
@@ -56,10 +60,17 @@ const ReviewerDashboard = () => {
                 ? "Under Review"
                 : a.status === "submitted"
                   ? "Submitted"
-                  : a.status,
+                  : a.status === "approved"
+                    ? "Approved"
+                    : a.status === "rejected"
+                      ? "Rejected"
+                      : a.status === "waitlisted"
+                        ? "Waitlisted"
+                        : a.status,
             documents: Array.isArray(a.documents) ? a.documents : [],
             priority: "medium",
             region: "",
+            raw: a,
           }));
           setPendingApplications(mapped);
         }
@@ -148,6 +159,46 @@ const ReviewerDashboard = () => {
       } catch {}
     })();
   }, []);
+
+  const openDetails = (app: any) => {
+    setSelectedApp(app);
+    setActionNotes(String(app.raw?.reviewNotes || ""));
+    setActionScore(app.raw?.score == null ? "" : String(app.raw?.score));
+    setDetailsOpen(true);
+  };
+
+  const handleDecision = async (app: any, decision: "approved" | "rejected") => {
+    setSavingAction(true);
+    try {
+      const payload: any = { status: decision, reviewNotes: actionNotes };
+      if (actionScore !== "") payload.score = Number(actionScore);
+      const r1 = await api.updateMyAssignedApplication(app.id, payload);
+      if (r1.success) {
+        await api.createReview({
+          applicationId: app.id,
+          overallScore: actionScore === "" ? null : Number(actionScore),
+          comments: actionNotes || null,
+          recommendation: decision === "approved" ? "approve" : "reject",
+        });
+        setPendingApplications((prev) =>
+          prev.map((p) =>
+            p.id === app.id
+              ? {
+                  ...p,
+                  status: decision === "approved" ? "Approved" : "Rejected",
+                  score: actionScore === "" ? p.score : Number(actionScore),
+                  raw: { ...p.raw, status: decision, reviewNotes: actionNotes, score: actionScore === "" ? p.raw?.score : Number(actionScore) },
+                }
+              : p,
+          ),
+        );
+      }
+    } finally {
+      setSavingAction(false);
+      setDetailsOpen(false);
+      setSelectedApp(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -390,17 +441,26 @@ const ReviewerDashboard = () => {
 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between">
-                  <button className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    onClick={() => openDetails(application)}
+                  >
                     <Eye className="h-4 w-4" />
                     <span>View Details</span>
                   </button>
 
                   <div className="flex items-center space-x-3">
-                    <button className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-red-600 transition-colors">
+                    <button
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-red-600 transition-colors"
+                      onClick={() => openDetails(application)}
+                    >
                       <XCircle className="h-4 w-4" />
                       <span>Reject</span>
                     </button>
-                    <button className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-600 transition-colors">
+                    <button
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-600 transition-colors"
+                      onClick={() => openDetails(application)}
+                    >
                       <CheckCircle className="h-4 w-4" />
                       <span>Approve</span>
                     </button>
@@ -418,6 +478,137 @@ const ReviewerDashboard = () => {
           </button>
         </div>
       </div>
+      {detailsOpen && selectedApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Application Details</h3>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setSelectedApp(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-600">Applicant</div>
+                  <div className="font-medium">{selectedApp.applicant.name}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Scholarship</div>
+                  <div className="font-medium">{selectedApp.scheme}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Status</div>
+                  <div className="font-medium">{selectedApp.status}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Score</div>
+                  <div className="font-medium">{selectedApp.score || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Submitted</div>
+                  <div className="font-medium">{String(selectedApp.submittedDate)}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Amount</div>
+                  <div className="font-medium">{selectedApp.amount || "-"}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-600">Email</div>
+                  <div className="font-medium">{selectedApp.applicant.email || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Phone</div>
+                  <div className="font-medium">{selectedApp.applicant.phone || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Course</div>
+                  <div className="font-medium">{selectedApp.applicant.course || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Year</div>
+                  <div className="font-medium">{selectedApp.applicant.year || "-"}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-600 mb-1">Documents</div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedApp.documents?.length ? (
+                    selectedApp.documents.map((d: any, i: number) => (
+                      <span key={i} className="inline-flex items-center space-x-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                        <Paperclip className="h-3 w-3" />
+                        <span>{String(d)}</span>
+                      </span>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">No documents uploaded</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Review Notes</label>
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    rows={4}
+                    value={actionNotes}
+                    onChange={(e) => setActionNotes(e.target.value)}
+                    placeholder="Enter comments for your decision"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Score</label>
+                  <input
+                    type="number"
+                    className="w-40 border rounded px-3 py-2"
+                    value={actionScore}
+                    onChange={(e) => setActionScore(e.target.value)}
+                    placeholder="e.g. 85"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t flex items-center justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded border"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setSelectedApp(null);
+                }}
+                disabled={savingAction}
+              >
+                Close
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
+                onClick={() => selectedApp && handleDecision(selectedApp, "rejected")}
+                disabled={savingAction}
+              >
+                Reject
+              </button>
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+                onClick={() => selectedApp && handleDecision(selectedApp, "approved")}
+                disabled={savingAction || !actionNotes.trim()}
+                title={!actionNotes.trim() ? "Please add review notes to approve" : ""}
+              >
+                {savingAction ? "Saving..." : "Approve"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
