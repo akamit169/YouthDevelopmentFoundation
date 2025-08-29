@@ -413,7 +413,9 @@ const Scholarships = () => {
 
     const matchesAmount = () => {
       if (selectedAmount === "all") return true;
-      const amount = parseInt(String(scholarship.amount).replace(/[^0-9]/g, ""));
+      const amount = parseInt(
+        String(scholarship.amount).replace(/[^0-9]/g, ""),
+      );
       switch (selectedAmount) {
         case "0-25000":
           return amount <= 25000;
