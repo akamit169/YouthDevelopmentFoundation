@@ -99,6 +99,12 @@ const Profile = () => {
           description: String(e?.message || e),
         });
       }
+      try {
+        const list = await api.listMyDocuments();
+        if (list.success) setDocuments(list.data || []);
+      } catch (e: any) {
+        // Do not toast twice; keep silent if docs fail
+      }
     })();
   }, []);
 
