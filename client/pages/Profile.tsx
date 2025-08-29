@@ -57,43 +57,7 @@ const Profile = () => {
     familyIncome: "",
   });
 
-  const [documents, setDocuments] = useState<any[]>([
-    {
-      id: 1,
-      name: "Aadhaar Card",
-      status: "Verified",
-      uploadDate: "2024-01-10",
-      size: "2.3 MB",
-    },
-    {
-      id: 2,
-      name: "10th Marksheet",
-      status: "Verified",
-      uploadDate: "2024-01-10",
-      size: "1.8 MB",
-    },
-    {
-      id: 3,
-      name: "12th Marksheet",
-      status: "Verified",
-      uploadDate: "2024-01-10",
-      size: "2.1 MB",
-    },
-    {
-      id: 4,
-      name: "Income Certificate",
-      status: "Pending",
-      uploadDate: "2024-01-15",
-      size: "1.5 MB",
-    },
-    {
-      id: 5,
-      name: "College ID Card",
-      status: "Verified",
-      uploadDate: "2024-01-12",
-      size: "0.9 MB",
-    },
-  ]);
+  const [documents, setDocuments] = useState<any[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
     setProfileData((prev) => ({
