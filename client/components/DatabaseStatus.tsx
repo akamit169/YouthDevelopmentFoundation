@@ -73,9 +73,9 @@ const DatabaseStatus = () => {
 
   if (isConnected && dbConnected === false) {
     return (
-      <Alert className="border-orange-200 bg-orange-50">
-        <AlertCircle className="h-4 w-4 text-orange-600" />
-        <AlertDescription className="text-orange-700">
+      <Alert className="border-red-200 bg-red-50">
+        <AlertCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-700">
           <div className="space-y-2">
             <p className="font-medium">Live database not connected.</p>
             {dbHost && (
@@ -97,7 +97,7 @@ const DatabaseStatus = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => window.open("/api/test/connection", "_blank")}
-                className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                className="text-red-700 border-red-300 hover:bg-red-100"
               >
                 <ExternalLink className="h-3 w-3 mr-1" />
                 API Status
@@ -110,9 +110,9 @@ const DatabaseStatus = () => {
   }
 
   return (
-    <Alert className="border-orange-200 bg-orange-50">
-      <AlertCircle className="h-4 w-4 text-orange-600" />
-      <AlertDescription className="text-orange-700">
+    <Alert className="border-red-200 bg-red-50">
+      <AlertCircle className="h-4 w-4 text-red-600" />
+      <AlertDescription className="text-red-700">
         <div className="space-y-3">
           <p className="font-medium">⚠️ API not reachable</p>
           {reason && <p className="text-sm">Reason: {reason}</p>}
@@ -124,7 +124,7 @@ const DatabaseStatus = () => {
               variant="outline"
               size="sm"
               onClick={() => window.open("/api/test/connection", "_blank")}
-              className="text-orange-700 border-orange-300 hover:bg-orange-100"
+              className="text-red-700 border-red-300 hover:bg-red-100"
             >
               <ExternalLink className="h-3 w-3 mr-1" />
               API Status
