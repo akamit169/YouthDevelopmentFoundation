@@ -32,7 +32,7 @@ const DatabaseStatus = () => {
           if (err) setReason(String(err));
           try {
             const ipRes = await fetch("/api/test/egress-ip");
-            const ipJson = await ipRes.json().catch(() => ({} as any));
+            const ipJson = await ipRes.json().catch(() => ({}) as any);
             if (ipJson?.ip) setEgressIp(String(ipJson.ip));
           } catch {}
         }
@@ -79,13 +79,15 @@ const DatabaseStatus = () => {
           <div className="space-y-2">
             <p className="font-medium">Live database not connected.</p>
             {dbHost && (
-              <p className="text-sm">DB Host: <span className="font-mono">{dbHost}</span></p>
+              <p className="text-sm">
+                DB Host: <span className="font-mono">{dbHost}</span>
+              </p>
             )}
-            {reason && (
-              <p className="text-sm">Reason: {reason}</p>
-            )}
+            {reason && <p className="text-sm">Reason: {reason}</p>}
             {egressIp && (
-              <p className="text-sm">Current server IP: <span className="font-mono">{egressIp}</span></p>
+              <p className="text-sm">
+                Current server IP: <span className="font-mono">{egressIp}</span>
+              </p>
             )}
             {!egressIp && (
               <p className="text-sm">Current server IP: detecting...</p>
@@ -114,7 +116,9 @@ const DatabaseStatus = () => {
         <div className="space-y-3">
           <p className="font-medium">⚠️ API not reachable</p>
           {reason && <p className="text-sm">Reason: {reason}</p>}
-          <p className="text-sm">Please refresh the page or try again shortly.</p>
+          <p className="text-sm">
+            Please refresh the page or try again shortly.
+          </p>
           <div className="flex items-center space-x-2 mt-2">
             <Button
               variant="outline"
