@@ -7,6 +7,9 @@ const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [reason, setReason] = useState<string>("");
+  const [egressIp, setEgressIp] = useState<string>("");
+  const [dbHost, setDbHost] = useState<string>("");
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -19,13 +22,25 @@ const DatabaseStatus = () => {
         const dbOk =
           result?.results?.database?.status === "connected" ||
           result?.success === true;
-        // Consider any HTTP response as API reachable (even 4xx/5xx)
+        // API reachable
         setIsConnected(true);
         setDbConnected(!!dbOk);
-      } catch (error) {
-        // Network failure => API unreachable
+        const host = result?.results?.database?.host || "";
+        const err = result?.error || result?.results?.database?.error || "";
+        if (!dbOk) {
+          setDbHost(String(host || ""));
+          if (err) setReason(String(err));
+          try {
+            const ipRes = await fetch("/api/test/egress-ip");
+            const ipJson = await ipRes.json().catch(() => ({} as any));
+            if (ipJson?.ip) setEgressIp(String(ipJson.ip));
+          } catch {}
+        }
+      } catch (error: any) {
+        // API unreachable
         setIsConnected(false);
         setDbConnected(null);
+        setReason(String(error?.message || "API unreachable"));
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +76,32 @@ const DatabaseStatus = () => {
       <Alert className="border-orange-200 bg-orange-50">
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
-          Live database not connected. Please try again shortly or contact support.
+          <div className="space-y-2">
+            <p className="font-medium">Live database not connected.</p>
+            {dbHost && (
+              <p className="text-sm">DB Host: <span className="font-mono">{dbHost}</span></p>
+            )}
+            {reason && (
+              <p className="text-sm">Reason: {reason}</p>
+            )}
+            {egressIp && (
+              <p className="text-sm">Current server IP: <span className="font-mono">{egressIp}</span></p>
+            )}
+            {!egressIp && (
+              <p className="text-sm">Current server IP: detecting...</p>
+            )}
+            <div className="flex items-center space-x-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/api/test/connection", "_blank")}
+                className="text-orange-700 border-orange-300 hover:bg-orange-100"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                API Status
+              </Button>
+            </div>
+          </div>
         </AlertDescription>
       </Alert>
     );
@@ -73,9 +113,8 @@ const DatabaseStatus = () => {
       <AlertDescription className="text-orange-700">
         <div className="space-y-3">
           <p className="font-medium">⚠️ API not reachable</p>
-          <p className="text-sm">
-            Please refresh the page or try again shortly.
-          </p>
+          {reason && <p className="text-sm">Reason: {reason}</p>}
+          <p className="text-sm">Please refresh the page or try again shortly.</p>
           <div className="flex items-center space-x-2 mt-2">
             <Button
               variant="outline"
