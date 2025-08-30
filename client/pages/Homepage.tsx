@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useAuth } from "../contexts/AuthContext";
+import DatabaseStatus from "../components/DatabaseStatus";
 import {
   ArrowRight,
   Users,
@@ -323,6 +324,11 @@ const Homepage = () => {
           )}
         </div>
       </nav>
+
+      {/* DB Status Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <DatabaseStatus />
+      </div>
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-ydf-deep-blue to-ydf-teal-green text-white py-20 overflow-hidden">
