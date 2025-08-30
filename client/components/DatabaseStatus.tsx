@@ -31,17 +31,25 @@ function analyzeError(err: string): { reason: string; action: string } | null {
   const msg = (err || "").toLowerCase();
   if (!msg) return null;
 
-  if (msg.includes("access denied for user") || msg.includes("er_access_denied_error")) {
+  if (
+    msg.includes("access denied for user") ||
+    msg.includes("er_access_denied_error")
+  ) {
     return {
       reason: "Authentication or host allowlist issue",
       action:
         "Verify DB user/password and allowlist the server egress IP on the database host. Ensure the user has CONNECT privileges for this host.",
     };
   }
-  if (msg.includes("enotfound") || msg.includes("getaddrinfo enotfound") || msg.includes("hostname not found")) {
+  if (
+    msg.includes("enotfound") ||
+    msg.includes("getaddrinfo enotfound") ||
+    msg.includes("hostname not found")
+  ) {
     return {
       reason: "Invalid hostname or DNS resolution failure",
-      action: "Check DB_HOST value, DNS settings, or use the database server's IP address.",
+      action:
+        "Check DB_HOST value, DNS settings, or use the database server's IP address.",
     };
   }
   if (msg.includes("econnrefused") || msg.includes("connection refused")) {
@@ -54,10 +62,15 @@ function analyzeError(err: string): { reason: string; action: string } | null {
   if (msg.includes("etimedout") || msg.includes("timeout")) {
     return {
       reason: "Network timeout",
-      action: "Allowlist the server IP, verify firewall/VPC rules, and confirm the host/port are correct.",
+      action:
+        "Allowlist the server IP, verify firewall/VPC rules, and confirm the host/port are correct.",
     };
   }
-  if (msg.includes("ssl") || msg.includes("certificate") || msg.includes("handshake")) {
+  if (
+    msg.includes("ssl") ||
+    msg.includes("certificate") ||
+    msg.includes("handshake")
+  ) {
     return {
       reason: "SSL/TLS configuration mismatch",
       action:
@@ -66,7 +79,8 @@ function analyzeError(err: string): { reason: string; action: string } | null {
   }
   return {
     reason: "Unknown connection error",
-    action: "Review the error details below and database server logs for more information.",
+    action:
+      "Review the error details below and database server logs for more information.",
   };
 }
 
@@ -161,22 +175,36 @@ const DatabaseStatus = () => {
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
           <div className="space-y-2">
-            <p>Live database not connected. Please try again shortly or contact support.</p>
+            <p>
+              Live database not connected. Please try again shortly or contact
+              support.
+            </p>
             {details.dbHost && (
-              <p className="text-xs">Database host: <span className="font-medium">{details.dbHost}</span></p>
+              <p className="text-xs">
+                Database host:{" "}
+                <span className="font-medium">{details.dbHost}</span>
+              </p>
             )}
             {details.dbUser && (
-              <p className="text-xs">Database user: <span className="font-medium">{details.dbUser}</span></p>
+              <p className="text-xs">
+                Database user:{" "}
+                <span className="font-medium">{details.dbUser}</span>
+              </p>
             )}
             {details.dbName && (
-              <p className="text-xs">Database name: <span className="font-medium">{details.dbName}</span></p>
+              <p className="text-xs">
+                Database name:{" "}
+                <span className="font-medium">{details.dbName}</span>
+              </p>
             )}
             {details.egressIp && (
-              <p className="text-xs">Server egress IP: <span className="font-medium">{details.egressIp}</span> (add to your DB allowlist)</p>
+              <p className="text-xs">
+                Server egress IP:{" "}
+                <span className="font-medium">{details.egressIp}</span> (add to
+                your DB allowlist)
+              </p>
             )}
-            {details.error && (
-              <p className="text-xs">Issue: {details.error}</p>
-            )}
+            {details.error && <p className="text-xs">Issue: {details.error}</p>}
             {details.reason && (
               <p className="text-xs">Reason: {details.reason}</p>
             )}
@@ -206,7 +234,9 @@ const DatabaseStatus = () => {
       <AlertDescription className="text-orange-700">
         <div className="space-y-3">
           <p className="font-medium">⚠️ API not reachable</p>
-          <p className="text-sm">Please refresh the page or try again shortly.</p>
+          <p className="text-sm">
+            Please refresh the page or try again shortly.
+          </p>
           <div className="flex items-center space-x-2 mt-2">
             <Button
               variant="outline"
